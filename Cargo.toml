@@ -1,0 +1,16 @@
+[package]
+name = "rustbuster"
+version = "0.2.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+reqwest = { version = "0.10.0-alpha.2", features = ["blocking"] }
+error-chain = "0"
+text-colorizer = "1"
+clap = "3"
+dns-lookup = "0"
+domain = "0.2.4"
+tokio-core = "0"
+futures = "0.1.31"
