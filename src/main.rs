@@ -12,8 +12,10 @@ use domain::rdata::{A, Aaaa, Mx};
 use domain::resolv::Resolver;
 use std::str::FromStr;
 use std::fs::File;
-use std::io::{self, BufRead};
+use std::io::{self, BufRead, Read, Write};
 use std::path::Path;
+use std::net::{TcpStream};
+use std::str::from_utf8;
 use error_chain::error_chain;
 use text_colorizer::*;
 use clap::{Arg, App};
@@ -33,6 +35,27 @@ struct Arguments {
     wordlist: String,
     website: String,
 }
+
+fn port_scan(website: &str) -> std::io::Result<()> {
+    let ip = lookup_host(website).unwrap();
+
+    for curr_port in 1..65335 {
+        let connect_string = format!("{}:{}", ip[0], curr_port);
+        
+        println!("Connecting to {}", &connect_string);
+
+        match TcpStream::connect(&connect_string) {
+            Ok(o) => {
+                println!("[+] Found open port: {}", curr_port);
+            }
+            Err(_) => {
+                print!("");
+            }
+        }
+    }
+
+    Ok(())
+} 
 
 fn get_dns_records(website: &str) -> std::io::Result<()> {
     let mut core = Core::new().unwrap();
@@ -137,12 +160,18 @@ fn main() -> std::io::Result<()> {
              .long("lookup-dns")
              .takes_value(true)
              .help("Run with -l=y if you want to lookup dns records"))
+        .arg(Arg::with_name("portscan")
+             .short('p')
+             .long("portscan")
+             .takes_value(true)
+             .help("Run with -p=y if you want to portscan the host"))
         .get_matches();
 
     let wordlist = matches.value_of("wordlist").unwrap_or("wordlist.txt");
     let website = matches.value_of("website").unwrap_or("");
     let brute_subdomains = matches.value_of("subdomains");
     let lookup_dns = matches.value_of("lookup-dns");
+    let portscan = matches.value_of("portscan");
 
     bruteforce(wordlist, website).expect("An error occurred while bruteforcing.");
     
@@ -154,6 +183,9 @@ fn main() -> std::io::Result<()> {
         get_dns_records(website).expect("An error occurred while looking up DNS records.");
     }
 
+    if portscan == Some("y") {
+        port_scan(website).expect("An error occurred while portscanning the host.");
+    }
 
     Ok(())
 } 
